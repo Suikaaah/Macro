@@ -55,6 +55,7 @@ enum Item {
 fn main() {
     use Item::*;
 
+    let rr   = Point(1049, 311);
     let r    = Point( 906, 379);
     let u    = Point( 763, 311);
     let l    = Point( 628, 380);
@@ -64,20 +65,22 @@ fn main() {
     let s_1  = Point( 970, 562);
     let s_2  = Point(1009, 562);
     let s_3  = Point(1050, 562);
+    let s_4  = Point(1091, 562);
     let x    = Point(1309, 341);
 
     let sequence = [
         SetSleep(750),
-        r,
+        rr,
         SetSleep(75),
         s_0, make, make,
         s_1, make, make,
         s_2, make, make,
         s_3, make, make,
+        s_4, make, make,
         SetSleep(750),
         x,
         SetSleep(75),
-        r, u, l, d
+        rr, r, u, l, d
     ];
 
     let mut ms: u64 = 0;
