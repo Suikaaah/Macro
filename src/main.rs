@@ -52,21 +52,43 @@ enum Item {
     Point(i32, i32),
 }
 
+fn process(sequence: &[Item]) {
+    use Item::*;
+
+    let mut ms = 0;
+
+    for item in sequence {
+        match *item {
+            SetSleep(x) => {
+                ms = x;
+            },
+            Point(x, y) => {
+                move_mouse(x, y);
+                sleep(10);
+                mouse_down();
+                sleep(10);
+                mouse_up();
+                sleep(ms);
+            }
+        }
+    }
+}
+
 fn main() {
     use Item::*;
 
-    let rr   = Point(1049, 311);
-    let r    = Point( 906, 379);
-    let u    = Point( 763, 311);
-    let l    = Point( 628, 380);
-    let d    = Point( 766, 458);
-    let make = Point(1288, 504);
-    let s_0  = Point( 931, 562);
-    let s_1  = Point( 970, 562);
-    let s_2  = Point(1009, 562);
-    let s_3  = Point(1050, 562);
-    let s_4  = Point(1091, 562);
-    let x    = Point(1309, 341);
+    let rr   = Point(1049, 331);
+    let r    = Point( 906, 399);
+    let u    = Point( 763, 331);
+    let l    = Point( 628, 400);
+    let d    = Point( 766, 478);
+    let make = Point(1288, 524);
+    let s_0  = Point( 931, 582);
+    let s_1  = Point( 970, 582);
+    let s_2  = Point(1009, 582);
+    let s_3  = Point(1050, 582);
+    let s_4  = Point(1091, 582);
+    let x    = Point(1309, 361);
 
     let sequence = [
         SetSleep(750),
@@ -83,24 +105,8 @@ fn main() {
         rr, r, u, l, d,
     ];
 
-    let mut ms: u64 = 0;
-    for _ in 0..10 {
-        for item in sequence {
-            match item {
-                SetSleep(x) => {
-                    ms = x;
-                },
-                Point(x, y) => {
-                    move_mouse(x, y);
-                    sleep(10);
-                    mouse_down();
-                    sleep(10);
-                    mouse_up();
-                    sleep(ms);
-                }
-            }
-        }
-
+    for _ in 0..20 {
+        process(&sequence);
         sleep(3500);
     }
 }
