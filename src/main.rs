@@ -80,7 +80,7 @@ fn main() {
         SetSleep(750),
         x,
         SetSleep(75),
-        rr, r, u, l, d
+        rr, r, u, l, d,
     ];
 
     let mut ms: u64 = 0;
