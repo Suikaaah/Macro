@@ -1,10 +1,13 @@
 use std::{thread, time::Duration};
 
+use engine::Engine;
 use sdl2::event::Event;
+use timer::Timer;
 use windows::Win32::UI::Input::KeyboardAndMouse::VIRTUAL_KEY;
 
 mod engine;
 mod input;
+mod timer;
 
 #[derive(Debug)]
 enum Item {
@@ -32,7 +35,8 @@ impl Item {
 
 fn main() {
     let ttf = sdl2::ttf::init().unwrap();
-    let mut eng = engine::Engine::new((400, 300), &ttf).unwrap();
+    let mut engine = Engine::new((400, 300), &ttf);
+    let mut timer = Timer::new(Duration::from_millis(4));
 
     use Item::*;
     let sequence = [
@@ -47,17 +51,17 @@ fn main() {
     ];
 
     'main_loop: loop {
-        for event in eng.sdl.event_pump().unwrap().poll_iter() {
+        for event in engine.sdl.event_pump().unwrap().poll_iter() {
             match event {
                 Event::Quit { .. } => break 'main_loop,
                 _ => {}
             }
         }
 
-        eng.clear();
-        eng.text("HI", (10, 10)).unwrap();
-        eng.render();
+        engine.clear();
+        engine.text("HI", (10, 10));
+        engine.render();
 
-        thread::sleep(Duration::from_millis(33));
+        timer.sleep();
     }
 }
