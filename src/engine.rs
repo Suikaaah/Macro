@@ -1,78 +1,101 @@
-use sdl2::{
-    pixels::Color,
-    rect::{Point, Rect},
-    render::{TextureCreator, TextureQuery, WindowCanvas},
-    ttf::{Font, Sdl2TtfContext},
-    video::WindowContext,
-    Sdl,
-};
+mod alternator;
+mod input;
+mod sdl_handler;
+mod timer;
 
-pub struct Engine<'ttf> {
-    pub sdl: Sdl,
-    canvas: WindowCanvas,
-    font: Font<'ttf, 'static>,
-    tex_creator: TextureCreator<WindowContext>,
+use alternator::Alternators;
+use input::Keys;
+use sdl2::{event::Event, pixels::Color, rect::Rect, ttf::Sdl2TtfContext};
+use sdl_handler::SDLHandler;
+use timer::Timers;
+
+pub struct Engine {
+    ttf: Sdl2TtfContext,
+    timers: Timers,
+    alt: Alternators,
+    keys: Keys,
+    draw: bool,
 }
 
-impl<'ttf> Engine<'ttf> {
-    pub fn new(size: (u32, u32), ttf: &'ttf Sdl2TtfContext) -> Self {
-        let sdl = sdl2::init().unwrap();
-
-        let canvas = {
-            let video_subsys = sdl.video().unwrap();
-
-            let window = video_subsys
-                .window("Window", size.0, size.1)
-                .position_centered()
-                .build()
-                .unwrap();
-
-            window.into_canvas().accelerated().build().unwrap()
-        };
-
-        let font = ttf.load_font("clacon2.ttf", 16).unwrap();
-
-        let tex_creator = canvas.texture_creator();
-
+impl Engine {
+    pub fn new() -> Self {
         Self {
-            sdl,
-            canvas,
-            font,
-            tex_creator,
+            ttf: sdl2::ttf::init().unwrap(),
+            timers: Timers::new(),
+            alt: Alternators::new(),
+            keys: Keys::new(),
+            draw: true,
         }
     }
 
-    pub fn text<S, P>(&mut self, text: S, pos: P)
-    where
-        S: AsRef<str>,
-        P: Into<Point>,
-    {
-        let surface = self
-            .font
-            .render(text.as_ref())
-            .solid(Color::RGB(0xFF, 0xFF, 0xFF))
-            .unwrap();
+    pub fn run(&mut self) {
+        const RESOLUTION: (u32, u32) = (400, 300);
 
-        let texture = self
-            .tex_creator
-            .create_texture_from_surface(&surface)
-            .unwrap();
+        let mut handler = SDLHandler::new(RESOLUTION, &self.ttf);
 
-        let target = {
-            let TextureQuery { width, height, .. } = texture.query();
-            let pos = pos.into();
-            Rect::new(pos.x, pos.y, width, height)
-        };
+        'main_loop: loop {
+            // input
+            if self.keys.z.is_down() {
+                self.draw = true;
+                self.alt.ls.toggle();
+            }
+            if self.keys.x.is_down() {
+                self.draw = true;
+                self.alt.rs.toggle();
+            }
+            if self.keys.c.is_down() {
+                self.draw = true;
+                self.alt.ss.toggle();
+            }
 
-        self.canvas.copy(&texture, None, Some(target)).unwrap();
-    }
+            // draw
+            if self.timers.draw.expired() {
+                self.timers.draw.update();
 
-    pub fn clear(&mut self) {
-        self.canvas.set_draw_color(Color::RGB(0, 0, 0));
-        self.canvas.clear();
-    }
+                for event in handler.event_pump().poll_iter() {
+                    match event {
+                        Event::Quit { .. } => break 'main_loop,
+                        _ => {}
+                    }
+                }
 
-    pub fn render(&mut self) {
-        self.canvas.present();
+                if self.draw {
+                    self.draw = false;
+
+                    handler.clear();
+
+                    if self.alt.ls.is_activated() {
+                        handler.rect(Rect::new(10, 10, 10, 10), Color::RGB(0xFF, 0, 0));
+                    }
+                    if self.alt.rs.is_activated() {
+                        handler.rect(Rect::new(60, 10, 10, 10), Color::RGB(0, 0xFF, 0));
+                    }
+                    if self.alt.ss.is_activated() {
+                        handler.rect(Rect::new(110, 10, 10, 10), Color::RGB(0, 0, 0xFF));
+                    }
+                    handler.text("ls", (10, 10));
+                    handler.text("rs", (60, 10));
+                    handler.text("ss", (110, 10));
+
+                    handler.render();
+                }
+            }
+
+            // spam
+            if self.timers.lr.expired() {
+                self.timers.lr.update();
+
+                self.alt.ls.execute();
+                self.alt.rs.execute();
+            }
+            if self.timers.s.expired() {
+                self.timers.s.update();
+
+                self.alt.ss.execute();
+            }
+
+            // sleep
+            self.timers.poll.sleep();
+        }
     }
 }
