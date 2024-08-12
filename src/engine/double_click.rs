@@ -1,39 +1,65 @@
 use std::time::{Duration, Instant};
 
 use super::input;
+use super::state::State;
 
 #[derive(PartialEq)]
-enum State {
+enum LocalState {
     Idle,
     UpReq,
     DownBeginReq,
     DownEndReq,
 }
 
+impl State for LocalState {
+    fn advance(&mut self) {
+        use LocalState::*;
+
+        *self = match *self {
+            Idle => UpReq,
+            UpReq => DownBeginReq,
+            DownBeginReq => DownEndReq,
+            DownEndReq => Idle,
+        };
+    }
+
+    fn delay(&self) -> Option<Duration> {
+        use LocalState::*;
+
+        match *self {
+            Idle => None,
+            UpReq => Some(Duration::from_millis(25)),
+            DownBeginReq => Some(Duration::from_millis(50)),
+            DownEndReq => Some(Duration::from_millis(75)),
+        }
+    }
+
+    fn action(&self) {
+        use LocalState::*;
+
+        match *self {
+            Idle => {},
+            UpReq => input::mouse_r_up(),
+            DownBeginReq => input::mouse_r_down(),
+            DownEndReq => input::mouse_r_up(),
+        }
+    }
+}
+
 pub struct DoubleClick {
     active: bool,
-    state: State,
+    state: LocalState,
     temporarily_disabled: bool,
     origin: Instant,
-    delay_init: Duration,
-    delay_on: Duration,
-    delay_off: Duration,
 }
 
 impl DoubleClick {
     pub fn new() -> Self {
-        const DELAY_INIT: Duration = Duration::from_millis(25);
-        const DELAY_ON: Duration = Duration::from_millis(50);
-        const DELAY_OFF: Duration = Duration::from_millis(25);
-
         Self {
             active: false,
-            state: State::Idle,
+            state: LocalState::Idle,
             temporarily_disabled: false,
             origin: Instant::now(),
-            delay_init: DELAY_INIT,
-            delay_on: DELAY_ON,
-            delay_off: DELAY_OFF,
         }
     }
 
@@ -46,8 +72,8 @@ impl DoubleClick {
     }
 
     pub fn request(&mut self) {
-        if self.is_active() && self.state != State::DownEndReq {
-            self.state = State::UpReq;
+        if self.is_active() && self.state != LocalState::DownEndReq {
+            self.state = LocalState::UpReq;
             self.origin = Instant::now();
         }
     }
@@ -58,23 +84,6 @@ impl DoubleClick {
 
     pub fn execute(&mut self) {
         self.temporarily_disabled = false;
-
-        let now = Instant::now();
-        let expired_init = self.origin + self.delay_init <= now;
-        let expired_on = self.origin + self.delay_on <= now;
-        let expired_off = self.origin + self.delay_on + self.delay_off <= now;
-
-        if expired_init && self.state == State::UpReq {
-            self.state = State::DownBeginReq;
-            input::mouse_r_up();
-        }
-        if expired_on && self.state == State::DownBeginReq {
-            self.state = State::DownEndReq;
-            input::mouse_r_down();
-        }
-        if expired_off && self.state == State::DownEndReq {
-            self.state = State::Idle;
-            input::mouse_r_up();
-        }
+        self.state.process(self.origin);
     }
 }

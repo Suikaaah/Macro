@@ -3,6 +3,7 @@ mod double_click;
 mod input;
 mod sdl_handler;
 mod timer;
+mod state;
 
 use alternator::Alternators;
 use double_click::DoubleClick;
@@ -88,7 +89,6 @@ impl Engine {
                 ($timer: ident, $something: tt) => {{
                     if self.timers.$timer.is_expired() {
                         self.timers.$timer.update();
-
                         $something
                     }
                 }};
@@ -101,6 +101,8 @@ impl Engine {
                 handle_idf!(z, { self.alts.ls.toggle(); });
                 handle_idf!(x, { self.alts.rs.toggle(); });
                 handle_idf!(c, { self.alts.ss.toggle(); });
+                handle_idf!(r, {
+                });
             }
             handle_com!(ctrl, down, { self.locked ^= true; });
 
