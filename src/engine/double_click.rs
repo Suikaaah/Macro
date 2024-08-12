@@ -2,6 +2,10 @@ use std::time::{Duration, Instant};
 
 use super::input;
 
+enum State {
+    Idle, UpReq, DownBeginReq, DownEndReq
+}
+
 pub struct DoubleClick {
     active: bool,
     requested: bool,

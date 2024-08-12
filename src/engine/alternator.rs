@@ -6,7 +6,7 @@ pub struct Alternator {
     f_false: fn(),
     f_true: fn(),
     state: bool,
-    activated: bool,
+    active: bool,
 }
 
 impl Alternator {
@@ -15,20 +15,20 @@ impl Alternator {
             f_false,
             f_true,
             state: false,
-            activated: false,
+            active: false,
         }
     }
 
     pub fn toggle(&mut self) {
-        self.activated ^= true;
+        self.active ^= true;
     }
 
-    pub fn is_activated(&self) -> bool {
-        self.activated
+    pub fn is_active(&self) -> bool {
+        self.active
     }
 
     pub fn execute(&mut self) {
-        if !self.activated {
+        if !self.active {
             if self.state {
                 (self.f_true)();
                 self.state = false;

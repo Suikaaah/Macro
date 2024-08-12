@@ -55,16 +55,13 @@ impl<'ttf> SDLHandler<'ttf> {
         self.canvas.fill_rect(rect).unwrap();
     }
 
-    pub fn text<S, P>(&mut self, text: S, pos: P)
+    pub fn text<S, P, C>(&mut self, text: S, pos: P, color: C)
     where
         S: AsRef<str>,
         P: Into<Point>,
+        C: Into<Color>,
     {
-        let surface = self
-            .font
-            .render(text.as_ref())
-            .solid(Color::RGB(0xFF, 0xFF, 0xFF))
-            .unwrap();
+        let surface = self.font.render(text.as_ref()).solid(color.into()).unwrap();
 
         let texture = self
             .tex_creator

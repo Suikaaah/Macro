@@ -1,6 +1,9 @@
 use std::mem;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    self as kam, INPUT, INPUT_KEYBOARD, INPUT_MOUSE, KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, VIRTUAL_KEY, VK_C, VK_DOWN, VK_LCONTROL, VK_LSHIFT, VK_R, VK_TAB, VK_X, VK_Z
+    self as kam, INPUT, INPUT_KEYBOARD, INPUT_MOUSE, KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC,
+    MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MOVE,
+    MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, VIRTUAL_KEY, VK_C, VK_DOWN, VK_LCONTROL, VK_LSHIFT,
+    VK_R, VK_RBUTTON, VK_TAB, VK_X, VK_Z,
 };
 
 pub fn send_input(input: INPUT) {
@@ -62,9 +65,9 @@ pub fn key_down(vk: VIRTUAL_KEY) {
     let mut input = INPUT::default();
 
     input.r#type = INPUT_KEYBOARD;
-    input.Anonymous.ki.wScan = unsafe {
-        kam::MapVirtualKeyA(vk.0 as u32, MAPVK_VK_TO_VSC)
-    }.try_into().unwrap();
+    input.Anonymous.ki.wScan = unsafe { kam::MapVirtualKeyA(vk.0 as u32, MAPVK_VK_TO_VSC) }
+        .try_into()
+        .unwrap();
     input.Anonymous.ki.wVk = vk;
 
     send_input(input);
@@ -75,9 +78,9 @@ pub fn key_up(vk: VIRTUAL_KEY) {
 
     input.r#type = INPUT_KEYBOARD;
     input.Anonymous.ki.dwFlags = KEYEVENTF_KEYUP;
-    input.Anonymous.ki.wScan = unsafe {
-        kam::MapVirtualKeyA(vk.0 as u32, MAPVK_VK_TO_VSC)
-    }.try_into().unwrap();
+    input.Anonymous.ki.wScan = unsafe { kam::MapVirtualKeyA(vk.0 as u32, MAPVK_VK_TO_VSC) }
+        .try_into()
+        .unwrap();
     input.Anonymous.ki.wVk = vk;
 
     send_input(input);
@@ -102,8 +105,17 @@ impl Key {
         }
     }
 
-    pub fn is_down(&mut self) -> bool {
+    #[must_use]
+    pub fn update(&mut self) -> bool {
         self.previous = mem::replace(&mut self.current, is_key_down(self.vk));
+        self.current ^ self.previous
+    }
+
+    pub fn is_down(&self) -> bool {
+        self.current
+    }
+
+    pub fn is_down_first(&self) -> bool {
         self.current && !self.previous
     }
 }
@@ -117,6 +129,7 @@ pub struct Keys {
     pub shift: Key,
     pub ctrl: Key,
     pub down: Key,
+    pub r_button: Key,
 }
 
 impl Keys {
@@ -130,6 +143,7 @@ impl Keys {
             shift: Key::new(VK_LSHIFT),
             ctrl: Key::new(VK_LCONTROL),
             down: Key::new(VK_DOWN),
+            r_button: Key::new(VK_RBUTTON),
         }
     }
 }

@@ -1,10 +1,11 @@
 use std::{
-    thread, time::{Duration, Instant}
+    thread,
+    time::{Duration, Instant},
 };
 
 #[derive(Debug)]
 pub struct Timer {
-    pub duration: Duration,
+    duration: Duration,
     last_update: Instant,
 }
 
@@ -21,19 +22,19 @@ impl Timer {
     }
 
     pub fn update(&mut self) {
-        if self.expired() {
+        if self.is_expired() {
             let now = Instant::now();
             let a = (now - self.last_update).as_nanos() % self.duration.as_nanos();
             self.last_update = now - Duration::from_nanos(a as u64);
         }
     }
 
-    pub fn expired(&self) -> bool {
+    pub fn is_expired(&self) -> bool {
         self.end() <= Instant::now()
     }
 
     pub fn sleep(&mut self) {
-        if !self.expired() {
+        if !self.is_expired() {
             thread::sleep(self.end() - Instant::now());
         }
 
@@ -52,7 +53,7 @@ impl Timers {
     pub fn new() -> Self {
         const DELAY_POLL: Duration = Duration::from_millis(1);
         const DELAY_DRAW: Duration = Duration::from_millis(4);
-        const DELAY_LR: Duration = Duration::from_millis(25);
+        const DELAY_LR: Duration = Duration::from_millis(20);
         const DELAY_S: Duration = Duration::from_millis(50);
 
         Self {
