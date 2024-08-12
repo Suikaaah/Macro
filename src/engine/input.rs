@@ -108,7 +108,7 @@ impl Key {
     #[must_use]
     pub fn update(&mut self) -> bool {
         self.previous = mem::replace(&mut self.current, is_key_down(self.vk));
-        self.current ^ self.previous
+        self.previous ^ self.current
     }
 
     pub fn is_down(&self) -> bool {
@@ -117,6 +117,10 @@ impl Key {
 
     pub fn is_down_first(&self) -> bool {
         self.current && !self.previous
+    }
+
+    pub fn combination(a: &Self, b: &Self) -> bool {
+        (a.is_down() && b.is_down_first()) || (a.is_down_first() && b.is_down())
     }
 }
 
