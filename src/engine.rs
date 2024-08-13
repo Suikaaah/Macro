@@ -12,8 +12,8 @@ use double_click::DoubleClick;
 use input::{Key, Keys};
 use sdl2::{event::Event, pixels::Color, ttf::Sdl2TtfContext};
 use sdl_handler::SDLHandler;
-use sequencial::Sequencial;
 use timer::Timers;
+use trade::Trade;
 
 pub struct Engine {
     ttf: Sdl2TtfContext,
@@ -23,7 +23,7 @@ pub struct Engine {
     draw: bool,
     locked: bool,
     double_click: DoubleClick,
-    trade: Sequencial,
+    trade: Trade,
 }
 
 enum TextColor {
@@ -41,7 +41,7 @@ impl Engine {
             draw: true,
             locked: false,
             double_click: DoubleClick::new(),
-            trade: Sequencial::new(),
+            trade: Trade::new(),
         }
     }
 
@@ -119,9 +119,11 @@ impl Engine {
                     self.alts.ss.toggle();
                 });
                 handle_idf!(r, {
-                    self.trade.set(trade::sequence());
                     self.trade.request();
                 });
+                if self.keys.shift.is_down_first() {
+                    self.trade.resume();
+                }
             }
             handle_com!(ctrl, down, {
                 self.locked ^= true;

@@ -42,8 +42,10 @@ impl State for LocalState {
     }
 
     fn delay(&self) -> Option<Duration> {
+        const DELAY: usize = 5;
+
         self.index
-            .map(|i| Duration::from_millis(((i + 1) * 20).try_into().unwrap()))
+            .map(|i| Duration::from_millis((i * DELAY).try_into().unwrap()))
     }
 
     fn action(&self) {
