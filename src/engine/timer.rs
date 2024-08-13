@@ -53,7 +53,7 @@ impl Timers {
     pub fn new() -> Self {
         const DELAY_POLL: Duration = Duration::from_millis(1);
         const DELAY_DRAW: Duration = Duration::from_millis(4);
-        const DELAY_LR: Duration = Duration::from_millis(20);
+        const DELAY_LR: Duration = Duration::from_millis(10);
         const DELAY_S: Duration = Duration::from_millis(50);
 
         Self {

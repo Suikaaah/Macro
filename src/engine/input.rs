@@ -1,10 +1,12 @@
 use std::mem;
+use windows::Win32::Foundation::POINT;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    self as kam, INPUT, INPUT_KEYBOARD, INPUT_MOUSE, KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC,
-    MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MOVE,
-    MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, VIRTUAL_KEY, VK_C, VK_DOWN, VK_LCONTROL, VK_LSHIFT,
-    VK_R, VK_RBUTTON, VK_TAB, VK_X, VK_Z,
+    self as kam, INPUT, INPUT_KEYBOARD, INPUT_MOUSE, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP,
+    MAPVK_VK_TO_VSC, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
+    MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSE_EVENT_FLAGS, VIRTUAL_KEY,
+    VK_C, VK_DOWN, VK_LCONTROL, VK_LSHIFT, VK_R, VK_RBUTTON, VK_TAB, VK_X, VK_Z,
 };
+use windows::Win32::UI::WindowsAndMessaging as wam;
 
 pub fn send_input(input: INPUT) {
     let array = [input];
@@ -15,9 +17,11 @@ pub fn send_input(input: INPUT) {
 }
 
 pub fn mouse_move(x: i32, y: i32) {
-    let mut input = INPUT::default();
+    let mut input = INPUT {
+        r#type: INPUT_MOUSE,
+        ..Default::default()
+    };
 
-    input.r#type = INPUT_MOUSE;
     input.Anonymous.mi.dx = (x as f32 * 65535.0 / 1920.0) as i32;
     input.Anonymous.mi.dy = (y as f32 * 65535.0 / 1080.0) as i32;
     input.Anonymous.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
@@ -25,65 +29,64 @@ pub fn mouse_move(x: i32, y: i32) {
     send_input(input);
 }
 
-pub fn mouse_l_down() {
-    let mut input = INPUT::default();
+pub fn mouse_pos() -> (i32, i32) {
+    let mut point = POINT::default();
 
-    input.r#type = INPUT_MOUSE;
-    input.Anonymous.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+    unsafe {
+        wam::GetCursorPos(&mut point).unwrap();
+    }
+
+    (point.x, point.y)
+}
+
+fn mouse_button_general(dw_flags: MOUSE_EVENT_FLAGS) {
+    let mut input = INPUT {
+        r#type: INPUT_MOUSE,
+        ..Default::default()
+    };
+
+    input.Anonymous.mi.dwFlags = dw_flags;
 
     send_input(input);
+}
+
+pub fn mouse_l_down() {
+    mouse_button_general(MOUSEEVENTF_LEFTDOWN);
 }
 
 pub fn mouse_l_up() {
-    let mut input = INPUT::default();
-
-    input.r#type = INPUT_MOUSE;
-    input.Anonymous.mi.dwFlags = MOUSEEVENTF_LEFTUP;
-
-    send_input(input);
+    mouse_button_general(MOUSEEVENTF_LEFTUP);
 }
 
 pub fn mouse_r_down() {
-    let mut input = INPUT::default();
-
-    input.r#type = INPUT_MOUSE;
-    input.Anonymous.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
-
-    send_input(input);
+    mouse_button_general(MOUSEEVENTF_RIGHTDOWN);
 }
 
 pub fn mouse_r_up() {
-    let mut input = INPUT::default();
+    mouse_button_general(MOUSEEVENTF_RIGHTUP);
+}
 
-    input.r#type = INPUT_MOUSE;
-    input.Anonymous.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
+fn key_general(vk: VIRTUAL_KEY, dw_flags: KEYBD_EVENT_FLAGS) {
+    let mut input = INPUT {
+        r#type: INPUT_KEYBOARD,
+        ..Default::default()
+    };
+
+    input.Anonymous.ki.dwFlags = dw_flags;
+    input.Anonymous.ki.wVk = vk;
+    input.Anonymous.ki.wScan = unsafe { kam::MapVirtualKeyA(vk.0 as u32, MAPVK_VK_TO_VSC) }
+        .try_into()
+        .unwrap();
 
     send_input(input);
 }
 
 pub fn key_down(vk: VIRTUAL_KEY) {
-    let mut input = INPUT::default();
-
-    input.r#type = INPUT_KEYBOARD;
-    input.Anonymous.ki.wScan = unsafe { kam::MapVirtualKeyA(vk.0 as u32, MAPVK_VK_TO_VSC) }
-        .try_into()
-        .unwrap();
-    input.Anonymous.ki.wVk = vk;
-
-    send_input(input);
+    key_general(vk, KEYBD_EVENT_FLAGS::default());
 }
 
 pub fn key_up(vk: VIRTUAL_KEY) {
-    let mut input = INPUT::default();
-
-    input.r#type = INPUT_KEYBOARD;
-    input.Anonymous.ki.dwFlags = KEYEVENTF_KEYUP;
-    input.Anonymous.ki.wScan = unsafe { kam::MapVirtualKeyA(vk.0 as u32, MAPVK_VK_TO_VSC) }
-        .try_into()
-        .unwrap();
-    input.Anonymous.ki.wVk = vk;
-
-    send_input(input);
+    key_general(vk, KEYEVENTF_KEYUP);
 }
 
 pub fn is_key_down(vk: VIRTUAL_KEY) -> bool {

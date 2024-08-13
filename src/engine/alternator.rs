@@ -56,8 +56,8 @@ impl Alternators {
         use input::*;
 
         Self {
-            ls: Alternator::new(|| mouse_l_down(), || mouse_l_up()),
-            rs: Alternator::new(|| mouse_r_down(), || mouse_r_up()),
+            ls: Alternator::new(mouse_l_down, mouse_l_up),
+            rs: Alternator::new(mouse_r_down, mouse_r_up),
             ss: Alternator::new(|| key_down(VK_SPACE), || key_up(VK_SPACE)),
         }
     }

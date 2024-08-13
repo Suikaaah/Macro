@@ -38,7 +38,7 @@ impl State for LocalState {
         use LocalState::*;
 
         match *self {
-            Idle => {},
+            Idle => {}
             UpReq => input::mouse_r_up(),
             DownBeginReq => input::mouse_r_down(),
             DownEndReq => input::mouse_r_up(),
@@ -48,8 +48,8 @@ impl State for LocalState {
 
 pub struct DoubleClick {
     active: bool,
-    state: LocalState,
     temporarily_disabled: bool,
+    state: LocalState,
     origin: Instant,
 }
 
@@ -57,8 +57,8 @@ impl DoubleClick {
     pub fn new() -> Self {
         Self {
             active: false,
-            state: LocalState::Idle,
             temporarily_disabled: false,
+            state: LocalState::Idle,
             origin: Instant::now(),
         }
     }
@@ -84,6 +84,6 @@ impl DoubleClick {
 
     pub fn execute(&mut self) {
         self.temporarily_disabled = false;
-        self.state.process(self.origin);
+        self.state.process(&self.origin);
     }
 }

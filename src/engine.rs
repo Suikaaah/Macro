@@ -2,14 +2,17 @@ mod alternator;
 mod double_click;
 mod input;
 mod sdl_handler;
-mod timer;
+mod sequencial;
 mod state;
+mod timer;
+mod trade;
 
 use alternator::Alternators;
 use double_click::DoubleClick;
 use input::{Key, Keys};
 use sdl2::{event::Event, pixels::Color, ttf::Sdl2TtfContext};
 use sdl_handler::SDLHandler;
+use sequencial::Sequencial;
 use timer::Timers;
 
 pub struct Engine {
@@ -20,6 +23,7 @@ pub struct Engine {
     draw: bool,
     locked: bool,
     double_click: DoubleClick,
+    trade: Sequencial,
 }
 
 enum TextColor {
@@ -37,6 +41,7 @@ impl Engine {
             draw: true,
             locked: false,
             double_click: DoubleClick::new(),
+            trade: Sequencial::new(),
         }
     }
 
@@ -94,25 +99,39 @@ impl Engine {
                 }};
             }
 
-            handle_id!(shift, { self.double_click.temporarily_disable(); });
-            handle_idf_nodraw!(r_button, { self.double_click.request(); });
+            handle_id!(shift, {
+                self.double_click.temporarily_disable();
+            });
+            handle_idf_nodraw!(r_button, {
+                self.double_click.request();
+            });
             if !self.locked {
-                handle_idf!(tab, { self.double_click.toggle(); });
-                handle_idf!(z, { self.alts.ls.toggle(); });
-                handle_idf!(x, { self.alts.rs.toggle(); });
-                handle_idf!(c, { self.alts.ss.toggle(); });
+                handle_idf!(tab, {
+                    self.double_click.toggle();
+                });
+                handle_idf!(z, {
+                    self.alts.ls.toggle();
+                });
+                handle_idf!(x, {
+                    self.alts.rs.toggle();
+                });
+                handle_idf!(c, {
+                    self.alts.ss.toggle();
+                });
                 handle_idf!(r, {
+                    self.trade.set(trade::sequence());
+                    self.trade.request();
                 });
             }
-            handle_com!(ctrl, down, { self.locked ^= true; });
+            handle_com!(ctrl, down, {
+                self.locked ^= true;
+            });
 
             // draw and event
             handle_timer!(draw, {
-
                 for event in handler.event_pump().poll_iter() {
-                    match event {
-                        Event::Quit { .. } => break 'main_loop,
-                        _ => {}
+                    if let Event::Quit { .. } = event {
+                        break 'main_loop;
                     }
                 }
 
@@ -140,12 +159,15 @@ impl Engine {
 
             // action
             self.double_click.execute();
+            self.trade.execute();
 
             handle_timer!(lr, {
                 self.alts.ls.execute();
                 self.alts.rs.execute();
             });
-            handle_timer!(s, { self.alts.ss.execute(); });
+            handle_timer!(s, {
+                self.alts.ss.execute();
+            });
 
             // sleep
             self.timers.poll.sleep();
