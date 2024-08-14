@@ -1,10 +1,7 @@
 use std::mem;
 use windows::Win32::Foundation::POINT;
 use windows::Win32::UI::Input::KeyboardAndMouse::{
-    self as kam, INPUT, INPUT_KEYBOARD, INPUT_MOUSE, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP,
-    MAPVK_VK_TO_VSC, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP,
-    MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSE_EVENT_FLAGS, VIRTUAL_KEY,
-    VK_C, VK_DOWN, VK_LCONTROL, VK_LSHIFT, VK_R, VK_RBUTTON, VK_TAB, VK_X, VK_Z,
+    self as kam, INPUT, INPUT_KEYBOARD, INPUT_MOUSE, KEYBD_EVENT_FLAGS, KEYEVENTF_KEYUP, MAPVK_VK_TO_VSC, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSE_EVENT_FLAGS, VIRTUAL_KEY, VK_C, VK_DOWN, VK_LCONTROL, VK_LEFT, VK_LSHIFT, VK_R, VK_RBUTTON, VK_RIGHT, VK_TAB, VK_X, VK_Z
 };
 use windows::Win32::UI::WindowsAndMessaging as wam;
 
@@ -108,9 +105,11 @@ impl Key {
         }
     }
 
-    #[must_use]
-    pub fn update(&mut self) -> bool {
+    pub fn update(&mut self) {
         self.previous = mem::replace(&mut self.current, is_key_down(self.vk));
+    }
+
+    pub fn is_diff(&self) -> bool {
         self.previous ^ self.current
     }
 
@@ -136,6 +135,8 @@ pub struct Keys {
     pub shift: Key,
     pub ctrl: Key,
     pub down: Key,
+    pub left: Key,
+    pub right: Key,
     pub r_button: Key,
 }
 
@@ -150,6 +151,8 @@ impl Keys {
             shift: Key::new(VK_LSHIFT),
             ctrl: Key::new(VK_LCONTROL),
             down: Key::new(VK_DOWN),
+            left: Key::new(VK_LEFT),
+            right: Key::new(VK_RIGHT),
             r_button: Key::new(VK_RBUTTON),
         }
     }

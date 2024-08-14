@@ -35,10 +35,12 @@ impl LocalState {
 
 impl State for LocalState {
     fn advance(&mut self) {
+        // print!("{:?}", self.index);
         self.index = match self.index {
             Some(index) if self.advanceable() => Some(index + 1),
             _ => None,
-        }
+        };
+        // println!(" -> {:?}", self.index);
     }
 
     fn delay(&self) -> Option<Duration> {

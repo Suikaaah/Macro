@@ -51,83 +51,83 @@ impl Engine {
         let mut handler = SDLHandler::new(RESOLUTION, &self.ttf);
 
         'main_loop: loop {
-            macro_rules! handle_idf_nodraw {
-                ($key: ident, $something: tt) => {{
-                    let _ = self.keys.$key.update();
-
-                    if self.keys.$key.is_down_first() {
-                        $something
-                    }
-                }};
+            macro_rules! update {
+                ($key: ident) => { self.keys.$key.update(); };
             }
-            macro_rules! handle_idf {
-                ($key: ident, $something: tt) => {{
-                    let _ = self.keys.$key.update();
+            macro_rules! update_idf {
+                ($key: ident) => {
+                    self.keys.$key.update();
 
                     if self.keys.$key.is_down_first() {
                         self.draw = true;
-                        $something
                     }
-                }};
+                };
             }
-            macro_rules! handle_id {
-                ($key: ident, $something: tt) => {{
-                    self.draw |= self.keys.$key.update();
-
-                    if self.keys.$key.is_down() {
-                        $something
-                    }
-                }};
+            macro_rules! update_diff {
+                ($key: ident) => {
+                    self.keys.$key.update();
+                    self.draw |= self.keys.$key.is_diff();
+                };
             }
-            macro_rules! handle_com {
-                ($key_a: ident, $key_b: ident, $something: tt) => {{
-                    let _ = self.keys.$key_a.update();
-                    let _ = self.keys.$key_b.update();
-
+            macro_rules! draw_com {
+                ($key_a: ident, $key_b: ident) => {
                     if Key::combination(&self.keys.$key_a, &self.keys.$key_b) {
                         self.draw = true;
+                    }
+                };
+            }
+            macro_rules! if_down {
+                ($key: ident, $something: tt) => {
+                    if self.keys.$key.is_down() { $something }
+                };
+            }
+            macro_rules! if_down_first {
+                ($key: ident, $something: tt) => {
+                    if self.keys.$key.is_down_first() { $something }
+                };
+            }
+            macro_rules! if_com {
+                ($key_a: ident, $key_b: ident, $something: tt) => {
+                    if Key::combination(&self.keys.$key_a, &self.keys.$key_b) {
                         $something
                     }
-                }};
+                };
             }
             macro_rules! handle_timer {
-                ($timer: ident, $something: tt) => {{
+                ($timer: ident, $something: tt) => {
                     if self.timers.$timer.is_expired() {
                         self.timers.$timer.update();
                         $something
                     }
-                }};
+                };
             }
 
-            handle_id!(shift, {
-                self.double_click.temporarily_disable();
-            });
-            handle_idf_nodraw!(r_button, {
-                self.double_click.request();
-            });
+            // update
+            update_idf!(z);
+            update_idf!(x);
+            update_idf!(c);
+            update!(r);
+            update_idf!(tab);
+            update_diff!(shift);
+            update!(ctrl);
+            update!(down);
+            update_idf!(left);
+            update_idf!(right);
+            update!(r_button);
+            draw_com!(ctrl, down);
+
+            // input
+            if_down!(shift, { self.double_click.temporarily_disable(); });
+            if_down_first!(r_button, { self.double_click.request(); });
             if !self.locked {
-                handle_idf!(tab, {
-                    self.double_click.toggle();
-                });
-                handle_idf!(z, {
-                    self.alts.ls.toggle();
-                });
-                handle_idf!(x, {
-                    self.alts.rs.toggle();
-                });
-                handle_idf!(c, {
-                    self.alts.ss.toggle();
-                });
-                handle_idf!(r, {
-                    self.trade.request();
-                });
-                if self.keys.shift.is_down_first() {
-                    self.trade.resume();
-                }
+                if_down_first!(tab, { self.double_click.toggle(); });
+                if_down_first!(z, { self.alts.ls.toggle(); });
+                if_down_first!(x, { self.alts.rs.toggle(); });
+                if_down_first!(c, { self.alts.ss.toggle(); });
+                if_down_first!(r, { self.trade.request(); });
+                if_down_first!(shift, { self.trade.resume(); });
             }
-            handle_com!(ctrl, down, {
-                self.locked ^= true;
-            });
+            if_com!(ctrl, down, { self.locked ^= true; });
 
             // draw and event
             handle_timer!(draw, {
